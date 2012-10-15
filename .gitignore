@@ -1,0 +1,5 @@
+*.pgm
+*.mvg
+*.png
+*.o
+dotify
