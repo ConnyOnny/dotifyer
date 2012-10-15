@@ -41,7 +41,7 @@ float* readImage (FILE *input, size_t *width, size_t *height) {
 		ERROR("could not read color count\n");
 	if (colorCount <= 1)
 		ERROR("Invalid image file with color count <= 1\n");
-	if (colorCount > 256)
+	if (colorCount > 255)
 		/* that would be nasty multi-byte stuff */
 		ERROR("This program does not support images with more than 256 colors.\n");
 	if (!isspace(fgetc(input))) {
@@ -66,15 +66,23 @@ float* readImage (FILE *input, size_t *width, size_t *height) {
 	return data;
 }
 
+float min (float a, float b) {
+	return a<b?a:b;
+}
+
+float max (float a, float b) {
+	return a>b?a:b;
+}
+
 float average (float* image, size_t width, size_t height, size_t top, size_t left, size_t bottom, size_t right) {
-	double count = (bottom-top) * (right-left);
+	double count = (bottom-top+1) * (right-left+1);
 	double result = 0;
 	for (size_t y=top; y<=bottom; y++) {
 		for (size_t x=left; x<=right; x++) {
 			result += image[x+y*width];
 		}
 	}
-	return result/count;
+	return min(1.0f,max(result/count,0.0f));
 }
 
 size_t min (size_t a, size_t b) {
@@ -88,9 +96,9 @@ size_t max (size_t a, size_t b) {
 float sample (float* image, size_t width, size_t height, float dotsize, float x, float y) {
 	if (x>=width || y>=height || x<0 || y<0)
 		ERROR("out of bounds: %f, %f\n", x, y);
-	size_t top = max(0,y-dotsize/2);
-	size_t left = max(0,x-dotsize/2);
-	size_t bottom = min(height-1,y+dotsize/2);
-	size_t right = min(width-1,x+dotsize/2);
+	size_t top = max(0,(size_t)(y-dotsize/2));
+	size_t left = max(0,(size_t)(x-dotsize/2));
+	size_t bottom = min(height-1,(size_t)(y+dotsize/2));
+	size_t right = min(width-1,(size_t)(x+dotsize/2));
 	return average (image, width, height, top, left, bottom, right);;
 }
