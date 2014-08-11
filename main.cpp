@@ -22,7 +22,7 @@ int main (int argc, char** argv) {
 	if (dotsize < 1)
 		ERROR ("dotsize must be positive\n");
 	float radiusmul = argc > 2 ? atof (argv[2]) : 1.0f;
-	size_t width, height;
+	size_t width=0, height=0;
 	float *image;
 	
 	image = readImage (stdin, &width, &height);

@@ -18,7 +18,7 @@ float* readImage (FILE *input, size_t *width, size_t *height) {
 	char sbuf [512];
 	size_t readWidth=0, readHeight=0;
 	int readChars;
-	size_t colorCount=0; /* this is integer, but always used as double */
+	size_t maxColorValue=0; /* this is integer, but always used as double */
 	sbuf[0]=0;
 	readChars = fscanf(input, "%512s", sbuf);
 	if (readChars != 1)
@@ -36,28 +36,47 @@ float* readImage (FILE *input, size_t *width, size_t *height) {
 		ERROR("could not read image width\n");
 	if (readWidth <= 0 || readHeight <= 0)
 		ERROR("Invalid image file with nonpositive dimensions\n");
-	readChars = fscanf(input, "%512zu", &colorCount);
+	readChars = fscanf(input, "%512zu", &maxColorValue);
 	if (readChars != 1)
 		ERROR("could not read color count\n");
-	if (colorCount <= 1)
+	if (maxColorValue <= 1)
 		ERROR("Invalid image file with color count <= 1\n");
-	if (colorCount > 255)
+	if (maxColorValue > 255)
 		/* that would be nasty multi-byte stuff */
 		ERROR("This program does not support images with more than 256 colors.\n");
 	if (!isspace(fgetc(input))) {
 		ERROR("Invalid image file\n");
 	}
+	/* check dimensions */
+	if (width != NULL) {
+		/* caller is interested in read width */
+		if (*width != 0) {
+			/* caller already thinks to know the image width */
+			if (readWidth != *width) {
+				ERROR("Invalid image width\n");
+			}
+		}
+		*width = readWidth;
+	}
+	if (height != NULL) {
+		/* caller is interested in read height */
+		if (*height != 0) {
+			/* caller already thinks to know the image height */
+			if (readHeight != *height) {
+				ERROR("Invalid image height\n");
+			}
+		}
+		*height = readHeight;
+	}
 	/* init memory */
 	float * data = (float*)malloc (readWidth*readHeight*sizeof(float));
-	*width = readWidth;
-	*height = readHeight;
 	/* read data */
 	for (size_t y=0; y<readHeight; y++) {
 		for (size_t x=0; x<readWidth; x++) {
 			int got = fgetc (input);
 			if (got == EOF)
 				ERROR ("image file incomplete\n");
-			data[x+y*readWidth] = (float)got / (colorCount-1);
+			data[x+y*readWidth] = (float)got / maxColorValue;
 		}
 	}
 	if (fgetc(input) != EOF) {
